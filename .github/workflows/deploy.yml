@@ -1,0 +1,157 @@
+name: Deploy Cloud Resume Infrastructure and Website
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  TERRAFORM_VERSION: 1.5.0
+
+jobs:
+  # Job 1: Terraform Infrastructure Deployment
+  terraform:
+    name: 'Deploy Infrastructure'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+        terraform_wrapper: false
+
+    - name: Terraform Format Check
+      id: fmt
+      run: terraform fmt -check -recursive
+      continue-on-error: true
+
+    - name: Terraform Init
+      id: init
+      run: terraform init
+
+    - name: Terraform Validate
+      id: validate
+      run: terraform validate
+
+    - name: Terraform Plan
+      id: plan
+      run: |
+        terraform plan -no-color -out=tfplan
+        terraform show -no-color tfplan > plan_output.txt
+      continue-on-error: true
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      id: apply
+      run: terraform apply -auto-approve tfplan
+
+    - name: Get Terraform Outputs
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      id: terraform_outputs
+      run: |
+        echo "api_gateway_url=$(terraform output -raw api_gateway_url)" >> $GITHUB_OUTPUT
+        echo "s3_bucket_name=$(terraform output -raw s3_bucket_name)" >> $GITHUB_OUTPUT
+        echo "website_url=$(terraform output -raw website_url)" >> $GITHUB_OUTPUT
+
+    - name: Save Terraform Outputs
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      run: |
+        mkdir -p ../outputs
+        echo "${{ steps.terraform_outputs.outputs.api_gateway_url }}" > ../outputs/api_gateway_url.txt
+        echo "${{ steps.terraform_outputs.outputs.s3_bucket_name }}" > ../outputs/s3_bucket_name.txt
+        echo "${{ steps.terraform_outputs.outputs.website_url }}" > ../outputs/website_url.txt
+
+    - name: Upload Terraform Outputs
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      uses: actions/upload-artifact@v4
+      with:
+        name: terraform-outputs
+        path: outputs/
+        retention-days: 1
+
+  # Job 2: Deploy Frontend to S3
+  deploy-frontend:
+    name: 'Deploy Frontend'
+    needs: terraform
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Download Terraform Outputs
+      uses: actions/download-artifact@v4
+      with:
+        name: terraform-outputs
+        path: outputs/
+
+    - name: Read Terraform Outputs
+      id: read_outputs
+      run: |
+        echo "api_gateway_url=$(cat outputs/api_gateway_url.txt)" >> $GITHUB_OUTPUT
+        echo "s3_bucket_name=$(cat outputs/s3_bucket_name.txt)" >> $GITHUB_OUTPUT
+        echo "website_url=$(cat outputs/website_url.txt)" >> $GITHUB_OUTPUT
+
+    - name: Update Frontend with API URL
+      run: |
+        # Replace placeholder in JavaScript file with actual API Gateway URL
+        sed -i "s|API_GATEWAY_URL_PLACEHOLDER|${{ steps.read_outputs.outputs.api_gateway_url }}|g" frontend/script.js
+
+    - name: Sync Frontend to S3
+      run: |
+        # Upload files to S3 with appropriate content types and cache control
+        aws s3 sync frontend/ s3://${{ steps.read_outputs.outputs.s3_bucket_name }}/ \
+          --delete \
+          --exclude "*.git*" \
+          --exclude "*.md" \
+          --exclude "*.txt"
+        
+        # Set specific content types and cache headers
+        aws s3 cp frontend/index.html s3://${{ steps.read_outputs.outputs.s3_bucket_name }}/index.html \
+          --content-type "text/html" \
+          --cache-control "max-age=300"
+        
+        aws s3 cp frontend/style.css s3://${{ steps.read_outputs.outputs.s3_bucket_name }}/style.css \
+          --content-type "text/css" \
+          --cache-control "max-age=31536000"
+        
+        aws s3 cp frontend/script.js s3://${{ steps.read_outputs.outputs.s3_bucket_name }}/script.js \
+          --content-type "application/javascript" \
+          --cache-control "max-age=31536000"
+
+    - name: Display Deployment Results
+      run: |
+        echo "🚀 Deployment completed successfully!"
+        echo ""
+        echo "� Website URL: ${{ steps.read_outputs.outputs.website_url }}"
+        echo "🔗 API Gateway URL: ${{ steps.read_outputs.outputs.api_gateway_url }}"
+        echo "🪣 S3 Bucket: ${{ steps.read_outputs.outputs.s3_bucket_name }}"
+        echo ""
+        echo "Your cloud resume is now live! 🎉"
+        echo "4. Validate API Gateway configuration"

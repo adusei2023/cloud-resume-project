@@ -1,0 +1,15 @@
+# Terraform Backend Configuration
+# Create this file as terraform/backend.tf for remote state management
+
+terraform {
+  backend "s3" {
+    # bucket         = "your-terraform-state-bucket"  # Set via backend-config
+    # key            = "cloud-resume/terraform.tfstate"  # Set via backend-config  
+    # region         = "us-east-1"  # Set via backend-config
+    encrypt        = true
+    dynamodb_table = "terraform-state-locks"
+  }
+}
+
+# Uncomment and configure the above when you're ready to use remote state
+# For initial setup, you can use local state by commenting out the backend block

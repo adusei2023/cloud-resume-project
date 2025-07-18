@@ -1,0 +1,35 @@
+# Terraform Variables Configuration
+# Copy this file to terraform.tfvars and customize the values
+# DO NOT commit terraform.tfvars to git (it's in .gitignore)
+
+# AWS Configuration
+aws_region = "us-east-1"
+environment = "production"
+
+# S3 Bucket Configuration
+# IMPORTANT: Change this to a globally unique name
+bucket_name = "samuel-cloud-resume-website-2025"
+
+# DynamoDB Configuration
+dynamodb_table_name = "resume-visitor-counter"
+
+# Lambda Configuration
+lambda_function_name = "resume-visitor-counter"
+
+# API Gateway Configuration
+api_stage_name = "prod"
+
+# Optional: Custom domain (leave empty if not using)
+domain_name = ""
+
+# Examples for different environments:
+# 
+# For development:
+# environment = "development"
+# bucket_name = "samuel-cloud-resume-dev"
+# api_stage_name = "dev"
+#
+# For staging:
+# environment = "staging"  
+# bucket_name = "samuel-cloud-resume-staging"
+# api_stage_name = "staging"
