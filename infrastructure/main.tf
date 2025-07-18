@@ -5,22 +5,44 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
+    }
   }
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
+}
+
+# Random suffix for unique resource names
+resource "random_string" "suffix" {
+  length  = 8
+  special = false
+  upper   = false
+}
+
+# Data sources
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+# Local values
+locals {
+  project_name = "cloud-resume"
+  bucket_name  = "${var.bucket_name}-${random_string.suffix.result}"
+  
+  common_tags = {
+    Project     = local.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Owner       = "samuel-adusei-boateng"
+  }
 }
 
 # S3 bucket for static website
 resource "aws_s3_bucket" "resume_bucket" {
-  bucket = "samuel-aduseiboateng-resume-${random_string.bucket_suffix.result}"
-}
-
-resource "random_string" "bucket_suffix" {
-  length  = 8
-  special = false
-  upper   = false
+  bucket = local.bucket_name
 }
 
 resource "aws_s3_bucket_website_configuration" "resume_website" {

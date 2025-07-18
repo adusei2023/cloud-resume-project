@@ -330,3 +330,57 @@ if (typeof module !== 'undefined' && module.exports) {
         showNotification
     };
 }
+
+class ResumeApp {
+    constructor() {
+        // This will be updated after Terraform deployment
+        this.apiEndpoint = 'https://your-api-id.execute-api.us-east-1.amazonaws.com/prod/visitor-count';
+        this.visitorCountElement = document.getElementById('visitor-count');
+        this.init();
+    }
+
+    init() {
+        // Initialization code here
+        this.loadVisitorCount();
+    }
+
+    async loadVisitorCount() {
+        try {
+            const response = await fetch(this.apiEndpoint);
+            const data = await response.json();
+            const count = data.count || 0;
+            this.animateCounterUpdate(this.visitorCountElement, count);
+        } catch (error) {
+            console.error('Error loading visitor count:', error);
+            this.visitorCountElement.textContent = '---';
+        }
+    }
+
+    animateCounterUpdate(element, targetCount) {
+        const startCount = 0;
+        const duration = 1000; // 1 second
+        const startTime = performance.now();
+        
+        function updateCounter(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function for smooth animation
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            const currentCount = Math.floor(easeOut * targetCount);
+            
+            element.textContent = currentCount.toLocaleString();
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateCounter);
+            } else {
+                element.textContent = targetCount.toLocaleString();
+            }
+        }
+        
+        requestAnimationFrame(updateCounter);
+    }
+}
+
+// Initialize the app
+const app = new ResumeApp();

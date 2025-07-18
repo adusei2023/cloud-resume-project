@@ -1,0 +1,44 @@
+version: 0.2
+
+env:
+  variables:
+    NODE_ENV: production
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+    commands:
+      - echo Installing dependencies...
+      - npm install --production
+
+  pre_build:
+    commands:
+      - echo Pre-build phase started on `date`
+      - echo Logging build information...
+
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Building the project...
+      - npm run build
+      - echo Build completed successfully
+
+  post_build:
+    commands:
+      - echo Post-build phase started on `date`
+      - echo Deploying to S3 bucket $S3_BUCKET_NAME...
+      - aws s3 sync ./dist s3://$S3_BUCKET_NAME --delete --exact-timestamps
+      - echo Invalidating CloudFront distribution $CLOUDFRONT_DISTRIBUTION_ID...
+      - aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --paths "/*"
+      - echo Deployment completed on `date`
+
+artifacts:
+  files:
+    - '**/*'
+  name: cloud-resume-artifacts
+  base-directory: dist
+
+cache:
+  paths:
+    - node_modules/**/*

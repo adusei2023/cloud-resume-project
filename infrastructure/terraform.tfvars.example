@@ -1,0 +1,2 @@
+# Copy this file to terraform.tfvars and fill in your values
+github_token = "your-github-personal-access-token"

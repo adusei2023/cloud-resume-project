@@ -1,14 +1,14 @@
 {
-  "name": "cloud-resume-project",
+  "name": "samuel-resume",
   "version": "1.0.0",
-  "description": "Cloud Resume Challenge Project",
-  "main": "index.js",
+  "description": "Samuel Adusei-Boateng's Resume Website",
+  "main": "index.html",
   "scripts": {
-    "build": "mkdir -p dist && cp -r src/* dist/",
-    "dev": "python -m http.server 8000 --directory src",
-    "test": "echo \"No tests specified\" && exit 0"
+    "start": "python -m http.server 8000",
+    "serve": "live-server ."
   },
-  "keywords": ["resume", "cloud", "aws"],
+  "keywords": ["resume", "portfolio"],
   "author": "Samuel Adusei-Boateng",
   "license": "MIT"
+}
 }
