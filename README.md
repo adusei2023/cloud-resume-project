@@ -313,3 +313,48 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **Built with ❤️ as part of the Cloud Resume Challenge**
+
+# Cloud Resume Challenge
+
+This project implements the Cloud Resume Challenge using AWS services.
+
+## Architecture
+
+- **Frontend**: Static website (HTML, CSS, JavaScript)
+- **Hosting**: S3 + CloudFront
+- **Infrastructure**: Terraform
+- **CI/CD**: GitHub Actions
+
+## Setup Instructions
+
+1. **Create AWS IAM User**
+   - Add S3 and CloudFront permissions
+   - Generate access keys
+
+2. **Create Terraform State Bucket**
+   - Manually create S3 bucket for state
+   - Update `infrastructure/terraform.tf` with bucket name
+
+3. **Add GitHub Secrets**
+   - `AWS_ACCESS_KEY_ID`
+   - `AWS_SECRET_ACCESS_KEY`
+   - `S3_BUCKET_NAME` (after infrastructure deployment)
+   - `CLOUDFRONT_DISTRIBUTION_ID` (after infrastructure deployment)
+
+4. **Deploy**
+   ```bash
+   git add .
+   git commit -m "Initial setup"
+   git push origin main
+   ```
+
+## Workflows
+
+- **Infrastructure**: Deploys AWS resources via Terraform
+- **Frontend**: Builds and deploys website to S3
+
+## Next Steps
+
+- [ ] Add visitor counter with Lambda and DynamoDB
+- [ ] Add custom domain
+- [ ] Add SSL certificate
