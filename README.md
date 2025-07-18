@@ -307,8 +307,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Samuel Adusei Boateng**
 - Email: samuel.boateng@email.com
-- LinkedIn: [Your LinkedIn Profile]
-- GitHub: [Your GitHub Profile]
+- LinkedIn:https://www.linkedin.com/in/samueladuseiboateng/
+- GitHub: https://github.com/adusei2023
 
 ---
 
