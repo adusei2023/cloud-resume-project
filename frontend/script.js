@@ -64,9 +64,12 @@ class CloudResumeApp {
         });
 
         // Handle scroll-based navigation highlighting
-        window.addEventListener('scroll', this.throttle(() => {
-            this.updateActiveNavigation();
-        }, 100));
+        window.addEventListener(
+            'scroll',
+            this.throttle(() => {
+                this.updateActiveNavigation();
+            }, 100)
+        );
     }
 
     /**
@@ -249,8 +252,8 @@ class CloudResumeApp {
                 return;
             }
 
-            const loadTime = window.performance.timing.loadEventEnd -
-                           window.performance.timing.navigationStart;
+            const loadTime =
+                window.performance.timing.loadEventEnd - window.performance.timing.navigationStart;
 
             console.log(`📊 Page loaded in ${loadTime}ms`);
 
@@ -258,7 +261,9 @@ class CloudResumeApp {
             if (window.performance.getEntriesByType) {
                 const perfData = window.performance.getEntriesByType('navigation')[0];
                 if (perfData) {
-                    console.log(`📈 DOM Content Loaded: ${Math.round(perfData.domContentLoadedEventEnd)}ms`);
+                    console.log(
+                        `📈 DOM Content Loaded: ${Math.round(perfData.domContentLoadedEventEnd)}ms`
+                    );
                 }
             }
         });
@@ -275,7 +280,7 @@ class CloudResumeApp {
             if (!inThrottle) {
                 func.apply(this, args);
                 inThrottle = true;
-                setTimeout(() => inThrottle = false, limit);
+                setTimeout(() => (inThrottle = false), limit);
             }
         };
     }
@@ -285,9 +290,11 @@ class CloudResumeApp {
      * @returns {boolean}
      */
     isDevelopmentMode() {
-        return window.location.hostname === 'localhost' ||
-               window.location.hostname === '127.0.0.1' ||
-               window.location.hostname === '';
+        return (
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.hostname === ''
+        );
     }
 
     /**
@@ -367,4 +374,3 @@ if (document.readyState === 'loading') {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = { CloudResumeApp, CONFIG };
 }
-
