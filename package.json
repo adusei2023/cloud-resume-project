@@ -1,14 +1,50 @@
 {
-  "name": "samuel-resume",
-  "version": "1.0.0",
-  "description": "Samuel Adusei-Boateng's Resume Website",
-  "main": "index.html",
+  "name": "cloud-resume-project",
+  "version": "2.0.0",
+  "description": "Modern serverless cloud resume built with AWS, Terraform, and CI/CD",
+  "main": "frontend/index.html",
   "scripts": {
-    "start": "python -m http.server 8000",
-    "serve": "live-server ."
+    "start": "npm run serve",
+    "serve": "python3 -m http.server 8080 --directory frontend",
+    "dev": "npm run serve",
+    "lint": "eslint frontend/**/*.js --fix",
+    "format": "prettier --write \"frontend/**/*.{js,html,css}\"",
+    "format:check": "prettier --check \"frontend/**/*.{js,html,css}\"",
+    "validate": "npm run format:check && npm run lint",
+    "test": "echo 'No tests yet' && exit 0",
+    "clean": "rm -rf node_modules package-lock.json",
+    "prepare": "command -v husky >/dev/null 2>&1 && husky install || true"
   },
-  "keywords": ["resume", "portfolio"],
-  "author": "Samuel Adusei-Boateng",
-  "license": "MIT"
-}
+  "keywords": [
+    "cloud-resume-challenge",
+    "aws",
+    "terraform",
+    "serverless",
+    "lambda",
+    "dynamodb",
+    "s3",
+    "api-gateway",
+    "resume",
+    "portfolio",
+    "infrastructure-as-code",
+    "cicd"
+  ],
+  "author": "Samuel Adusei-Boateng <samuelad1949@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adusei2023/cloud-resume-project.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adusei2023/cloud-resume-project/issues"
+  },
+  "homepage": "https://github.com/adusei2023/cloud-resume-project#readme",
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
 }
