@@ -1,386 +1,376 @@
-// JavaScript for Cloud Resume functionality
+/**
+ * Cloud Resume - Modern JavaScript Application
+ * @author Samuel Adusei-Boateng
+ * @version 2.0.0
+ */
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all functionality
-    initializeNavigation();
-    loadVisitorCount();
-    initializeSmoothScrolling();
-    initializeProfileImage();
-});
+'use strict';
+
+// Configuration
+const CONFIG = {
+    apiEndpoint: 'https://ufx4t82h6a.execute-api.us-east-1.amazonaws.com/prod/visitor-count',
+    animationDuration: 1000,
+    notificationTimeout: 3000,
+    scrollOffset: 200
+};
 
 /**
- * Initialize navigation functionality
+ * Main Application Class
  */
-function initializeNavigation() {
-    const navLinks = document.querySelectorAll('.nav-link');
-    const sections = document.querySelectorAll('.section');
+class CloudResumeApp {
+    constructor() {
+        this.visitorCountElement = document.getElementById('visitor-count');
+        this.navLinks = document.querySelectorAll('.nav-link');
+        this.sections = document.querySelectorAll('.section');
+        this.init();
+    }
 
-    // Handle navigation clicks
-    navLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Remove active class from all links
-            navLinks.forEach(l => l.classList.remove('active'));
-            
-            // Add active class to clicked link
-            this.classList.add('active');
-            
-            // Get target section
-            const targetId = this.getAttribute('href').substring(1);
-            const targetSection = document.getElementById(targetId);
-            
-            if (targetSection) {
-                // Smooth scroll to section
-                targetSection.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
+    /**
+     * Initialize all application functionality
+     */
+    init() {
+        this.initializeNavigation();
+        this.loadVisitorCount();
+        this.initializeSmoothScrolling();
+        this.initializeProfileImage();
+        this.initializeScrollAnimations();
+        this.initializePerformanceMonitoring();
+    }
+
+    /**
+     * Initialize navigation functionality with active state management
+     */
+    initializeNavigation() {
+        // Handle navigation clicks
+        this.navLinks.forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+
+                // Update active state
+                this.navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+
+                // Smooth scroll to target
+                const targetId = link.getAttribute('href').substring(1);
+                const targetSection = document.getElementById(targetId);
+
+                if (targetSection) {
+                    targetSection.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
         });
-    });
 
-    // Handle scroll-based navigation highlighting
-    window.addEventListener('scroll', function() {
+        // Handle scroll-based navigation highlighting
+        window.addEventListener(
+            'scroll',
+            this.throttle(() => {
+                this.updateActiveNavigation();
+            }, 100)
+        );
+    }
+
+    /**
+     * Update active navigation based on scroll position
+     */
+    updateActiveNavigation() {
         let current = '';
-        
-        sections.forEach(section => {
+
+        this.sections.forEach(section => {
             const sectionTop = section.offsetTop;
-            const sectionHeight = section.clientHeight;
-            
-            if (window.pageYOffset >= (sectionTop - 200)) {
+            if (window.pageYOffset >= sectionTop - CONFIG.scrollOffset) {
                 current = section.getAttribute('id');
             }
         });
 
-        navLinks.forEach(link => {
+        this.navLinks.forEach(link => {
             link.classList.remove('active');
             if (link.getAttribute('href').substring(1) === current) {
                 link.classList.add('active');
             }
         });
-    });
-}
-
-/**
- * Load visitor count from API
- */
-async function loadVisitorCount() {
-    const visitorCountElement = document.getElementById('visitor-count');
-    
-    try {
-        // Replace this URL with your actual API Gateway endpoint
-        // This will be set during deployment
-        const apiUrl = 'https://ufx4t82h6a.execute-api.us-east-1.amazonaws.com/prod/visitor-count';
-        
-        // Show loading state
-        visitorCountElement.textContent = 'Loading...';
-        
-        const response = await fetch(apiUrl, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        
-        // Update visitor count with animation
-        animateCounterUpdate(visitorCountElement, data.count);
-        
-        // Remove loading animation
-        visitorCountElement.classList.add('loaded');
-        
-        console.log('Visitor count updated successfully:', data.count);
-        
-    } catch (error) {
-        console.error('Error fetching visitor count:', error);
-        
-        // Fallback display
-        visitorCountElement.textContent = '---';
-        visitorCountElement.classList.add('loaded');
-        
-        // You might want to show this error in development only
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            visitorCountElement.textContent = 'API Not Connected';
-            visitorCountElement.style.fontSize = '0.8rem';
-        }
-    }
-}
-
-/**
- * Animate counter update
- */
-function animateCounterUpdate(element, targetCount) {
-    const startCount = 0;
-    const duration = 1000; // 1 second
-    const startTime = performance.now();
-    
-    function updateCounter(currentTime) {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Easing function for smooth animation
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        const currentCount = Math.floor(easeOut * targetCount);
-        
-        element.textContent = currentCount.toLocaleString();
-        
-        if (progress < 1) {
-            requestAnimationFrame(updateCounter);
-        } else {
-            element.textContent = targetCount.toLocaleString();
-        }
-    }
-    
-    requestAnimationFrame(updateCounter);
-}
-
-/**
- * Initialize smooth scrolling for all internal links
- */
-function initializeSmoothScrolling() {
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        });
-    });
-}
-
-/**
- * Initialize profile image with fallback
- */
-function initializeProfileImage() {
-    const profileImg = document.getElementById('profile-img');
-    
-    // Add error handler for profile image
-    profileImg.addEventListener('error', function() {
-        // Fallback to a gradient background with initials
-        this.style.background = 'linear-gradient(135deg, #3498db, #2980b9)';
-        this.style.color = 'white';
-        this.style.display = 'flex';
-        this.style.alignItems = 'center';
-        this.style.justifyContent = 'center';
-        this.style.fontSize = '3rem';
-        this.style.fontWeight = 'bold';
-        this.textContent = 'SA';
-        this.alt = 'Samuel Adusei Boateng';
-    });
-}
-
-/**
- * Utility function to show loading state
- */
-function showLoading(element, text = 'Loading...') {
-    element.innerHTML = `
-        <div class="loading-spinner">
-            <i class="fas fa-spinner fa-spin"></i>
-            ${text}
-        </div>
-    `;
-}
-
-/**
- * Utility function to format numbers
- */
-function formatNumber(num) {
-    if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K';
-    }
-    return num.toString();
-}
-
-/**
- * Add intersection observer for scroll animations
- */
-function initializeScrollAnimations() {
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -100px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-            }
-        });
-    }, observerOptions);
-
-    // Observe all sections for scroll animations
-    document.querySelectorAll('.section').forEach(section => {
-        observer.observe(section);
-    });
-}
-
-/**
- * Initialize theme toggle (if you want to add dark mode in the future)
- */
-function initializeTheme() {
-    // Check for saved theme preference or default to light mode
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-}
-
-/**
- * Handle form submissions (if you add contact forms later)
- */
-function handleFormSubmissions() {
-    const forms = document.querySelectorAll('form');
-    
-    forms.forEach(form => {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = new FormData(this);
-            const formObject = Object.fromEntries(formData);
-            
-            try {
-                // Handle form submission
-                console.log('Form data:', formObject);
-                
-                // Show success message
-                showNotification('Message sent successfully!', 'success');
-                
-            } catch (error) {
-                console.error('Form submission error:', error);
-                showNotification('Error sending message. Please try again.', 'error');
-            }
-        });
-    });
-}
-
-/**
- * Show notification messages
- */
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.textContent = message;
-    
-    // Style the notification
-    Object.assign(notification.style, {
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
-        padding: '1rem 1.5rem',
-        borderRadius: '8px',
-        color: 'white',
-        fontWeight: '500',
-        zIndex: '9999',
-        transform: 'translateX(100%)',
-        transition: 'transform 0.3s ease',
-        backgroundColor: type === 'success' ? '#27ae60' : type === 'error' ? '#e74c3c' : '#3498db'
-    });
-    
-    document.body.appendChild(notification);
-    
-    // Animate in
-    setTimeout(() => {
-        notification.style.transform = 'translateX(0)';
-    }, 100);
-    
-    // Remove after 3 seconds
-    setTimeout(() => {
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
-}
-
-/**
- * Performance monitoring (optional)
- */
-function initializePerformanceMonitoring() {
-    // Log page load time
-    window.addEventListener('load', () => {
-        const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
-        console.log(`Page loaded in ${loadTime}ms`);
-    });
-}
-
-// Initialize performance monitoring
-initializePerformanceMonitoring();
-
-// Add scroll animations if supported
-if ('IntersectionObserver' in window) {
-    initializeScrollAnimations();
-}
-
-// Export functions for testing (if needed)
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        loadVisitorCount,
-        animateCounterUpdate,
-        formatNumber,
-        showNotification
-    };
-}
-
-class ResumeApp {
-    constructor() {
-        // This will be updated after Terraform deployment
-        this.apiEndpoint = 'https://your-api-id.execute-api.us-east-1.amazonaws.com/prod/visitor-count';
-        this.visitorCountElement = document.getElementById('visitor-count');
-        this.init();
     }
 
-    init() {
-        // Initialization code here
-        this.loadVisitorCount();
-    }
-
+    /**
+     * Load visitor count from API with error handling
+     */
     async loadVisitorCount() {
+        if (!this.visitorCountElement) {
+            return;
+        }
+
         try {
-            const response = await fetch(this.apiEndpoint);
+            this.visitorCountElement.textContent = 'Loading...';
+
+            const response = await fetch(CONFIG.apiEndpoint, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                cache: 'no-cache'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
             const count = data.count || 0;
+
+            // Animate counter update
             this.animateCounterUpdate(this.visitorCountElement, count);
+
+            console.log('✅ Visitor count updated successfully:', count);
         } catch (error) {
-            console.error('Error loading visitor count:', error);
-            this.visitorCountElement.textContent = '---';
+            console.error('❌ Error fetching visitor count:', error);
+            this.handleVisitorCountError();
         }
     }
 
+    /**
+     * Handle visitor count loading error
+     */
+    handleVisitorCountError() {
+        this.visitorCountElement.textContent = '---';
+
+        // Show detailed error in development
+        if (this.isDevelopmentMode()) {
+            this.visitorCountElement.textContent = 'API Not Connected';
+            this.visitorCountElement.style.fontSize = '0.8rem';
+        }
+    }
+
+    /**
+     * Animate counter with easing
+     * @param {HTMLElement} element - Target element
+     * @param {number} targetCount - Target count value
+     */
     animateCounterUpdate(element, targetCount) {
-        const startCount = 0;
-        const duration = 1000; // 1 second
         const startTime = performance.now();
-        
-        function updateCounter(currentTime) {
+
+        const updateCounter = currentTime => {
             const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            
-            // Easing function for smooth animation
+            const progress = Math.min(elapsed / CONFIG.animationDuration, 1);
+
+            // Cubic easing out for smooth animation
             const easeOut = 1 - Math.pow(1 - progress, 3);
             const currentCount = Math.floor(easeOut * targetCount);
-            
+
             element.textContent = currentCount.toLocaleString();
-            
+
             if (progress < 1) {
                 requestAnimationFrame(updateCounter);
             } else {
                 element.textContent = targetCount.toLocaleString();
+                element.classList.add('loaded');
             }
-        }
-        
+        };
+
         requestAnimationFrame(updateCounter);
+    }
+
+    /**
+     * Initialize smooth scrolling for all anchor links
+     */
+    initializeSmoothScrolling() {
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
+
+                e.preventDefault();
+                const target = document.querySelector(href);
+
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    }
+
+    /**
+     * Initialize profile image with error handling
+     */
+    initializeProfileImage() {
+        const profileImg = document.getElementById('profile-img');
+
+        if (!profileImg) return;
+
+        profileImg.addEventListener('error', function () {
+            this.style.cssText = `
+                background: linear-gradient(135deg, #3498db, #2980b9);
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 3rem;
+                font-weight: bold;
+            `;
+            this.textContent = 'SA';
+            this.alt = 'Samuel Adusei Boateng';
+        });
+    }
+
+    /**
+     * Initialize scroll animations using Intersection Observer
+     */
+    initializeScrollAnimations() {
+        if (!('IntersectionObserver' in window)) {
+            return;
+        }
+
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-in');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        this.sections.forEach(section => {
+            observer.observe(section);
+        });
+    }
+
+    /**
+     * Initialize performance monitoring
+     */
+    initializePerformanceMonitoring() {
+        window.addEventListener('load', () => {
+            if (!window.performance || !window.performance.timing) {
+                return;
+            }
+
+            const loadTime =
+                window.performance.timing.loadEventEnd - window.performance.timing.navigationStart;
+
+            console.log(`📊 Page loaded in ${loadTime}ms`);
+
+            // Log additional metrics if available
+            if (window.performance.getEntriesByType) {
+                const perfData = window.performance.getEntriesByType('navigation')[0];
+                if (perfData) {
+                    console.log(
+                        `📈 DOM Content Loaded: ${Math.round(perfData.domContentLoadedEventEnd)}ms`
+                    );
+                }
+            }
+        });
+    }
+
+    /**
+     * Throttle function to limit function calls
+     * @param {Function} func - Function to throttle
+     * @param {number} limit - Time limit in ms
+     */
+    throttle(func, limit) {
+        let inThrottle;
+        return function (...args) {
+            if (!inThrottle) {
+                func.apply(this, args);
+                inThrottle = true;
+                setTimeout(() => (inThrottle = false), limit);
+            }
+        };
+    }
+
+    /**
+     * Check if running in development mode
+     * @returns {boolean}
+     */
+    isDevelopmentMode() {
+        return (
+            window.location.hostname === 'localhost' ||
+            window.location.hostname === '127.0.0.1' ||
+            window.location.hostname === ''
+        );
+    }
+
+    /**
+     * Format numbers with K/M suffixes
+     * @param {number} num - Number to format
+     * @returns {string}
+     */
+    static formatNumber(num) {
+        if (num >= 1000000) {
+            return (num / 1000000).toFixed(1) + 'M';
+        } else if (num >= 1000) {
+            return (num / 1000).toFixed(1) + 'K';
+        }
+        return num.toString();
+    }
+
+    /**
+     * Show notification message
+     * @param {string} message - Notification message
+     * @param {string} type - Notification type (success/error/info)
+     */
+    static showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+
+        const bgColors = {
+            success: '#27ae60',
+            error: '#e74c3c',
+            info: '#3498db'
+        };
+
+        Object.assign(notification.style, {
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            padding: '1rem 1.5rem',
+            borderRadius: '8px',
+            color: 'white',
+            fontWeight: '500',
+            zIndex: '9999',
+            backgroundColor: bgColors[type] || bgColors.info,
+            transform: 'translateX(400px)',
+            transition: 'transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        });
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+
+        // Remove after timeout
+        setTimeout(() => {
+            notification.style.transform = 'translateX(400px)';
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }, CONFIG.notificationTimeout);
     }
 }
 
-// Initialize the app
-const app = new ResumeApp();
+// Initialize application when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.cloudResumeApp = new CloudResumeApp();
+    });
+} else {
+    window.cloudResumeApp = new CloudResumeApp();
+}
+
+// Export for testing/modules if needed
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { CloudResumeApp, CONFIG };
+}
